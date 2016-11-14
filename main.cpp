@@ -74,7 +74,7 @@ void initializeEandM(int nSpins, mat spinMatrix, double& energy, double& magneti
     }
 }
 
-vec metropolis(int nSpins=2, int monteCarloCycles=100000, double temperature=1.0, string fill="ordered", bool steadyState=false, bool makeProbDistHist=false) {
+vec metropolis(int nSpins=2, int monteCarloCycles=10000000, double temperature=1.0, string fill="ordered", bool steadyState=false, bool makeProbDistHist=false) {
     std::random_device rd;
     std::mt19937_64 gen(rd());
     //Set up the uniform distribution for x \in [[0, 1]
@@ -212,6 +212,25 @@ vec metropolis(int nSpins=2, int monteCarloCycles=100000, double temperature=1.0
     return relevantValues;
 }
 
+void defaultRelevantValuesPrint() {
+    vec relevantValues = metropolis();
+    double specificHeat;
+    double susceptibility;
+
+    specificHeat = relevantValues(1) - relevantValues(0)*relevantValues(0);
+    susceptibility = relevantValues(3)-relevantValues(2)*relevantValues(2);
+
+    cout << "Printing out relevant values for the 2x2 system case." << endl;
+    cout << "Run values have been set to the following:" << endl;
+    cout << "1000000 Monte Carlo cyles, temperature = 1 and ordered system." << endl;
+    cout << endl;
+    cout << "The energy is " << relevantValues(0) << endl;
+    cout << "The mean absolute magnetisation is " << relevantValues(4) << endl;
+    cout << "The specific heat is " << specificHeat << endl;
+    cout << "The susceptiblity is " << susceptibility << endl;
+}
+
+
 void expectedEnergyToFile() {
     //Writing E to file
     //Running for temp = 1.0 and temp = 2.4
@@ -321,11 +340,15 @@ void acceptedConfigToFile() {
 }
 
 
-void probDistToFile() {
-    int nSpins = 20; int monteCarloCycles = 100000;
+void probDistToFile(bool writeToFile=false) {
+    int nSpins = 20; int monteCarloCycles = 1000000;
+    double varians;
 
     for(double temperature = 1.0; temperature < 2.5; temperature += 1.4) {
-        vec relevantValues = metropolis(nSpins, monteCarloCycles, temperature, "Random", true, true);
+        vec relevantValues = metropolis(nSpins, monteCarloCycles, temperature, "Random", true, writeToFile);
+        varians = relevantValues(1) - relevantValues(0)*relevantValues(0);
+
+        cout << "The computed variance in energy for " << temperature <<" in temperature is " << varians << "." << endl;
     }
 }
 
@@ -375,7 +398,7 @@ void phaseTransitionParallell(double tempStart, double tempEnd, double dt, int w
 
     for(int i = 0; i < 4; i++) {
         for(int k = (worker-1)*numberOfJobs; k < worker*numberOfJobs; k++) {
-            vec relevantValues = metropolis(nSpins[i], monteCarloCycles, T[k], "Random");
+            vec relevantValues = metropolis(nSpins[i], monteCarloCycles, T[k], "Random", true);
 
             varians = relevantValues(1) - relevantValues(0)*relevantValues(0);
             heatSpecific = (1/(T[k]*T[k]))*varians;
@@ -423,6 +446,7 @@ void phaseTransitionParallell(double tempStart, double tempEnd, double dt, int w
 }
 
 int main(int argc, char* argv[]) {
+    //defaultRelevantValuesPrint(); //Running the 2x2 matrix (default values)
     //expectedEnergyToFile(); //Finished and already ran it. Takes a long time. See github for txt file
     //magneticMomentumToFile(); //Finished and already ran it. Takes a long time. See github for txt file
     //acceptedConfigToFile(); //Finished and already ran it. Takes a long time. See github for txt file
@@ -510,8 +534,6 @@ int main(int argc, char* argv[]) {
             cout << "Wrong arguments. Run the program with 'help' as argument for guidelines." << endl;
         }
     }
-
-
 
     return 0;
 }
