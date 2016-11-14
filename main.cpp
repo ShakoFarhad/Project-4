@@ -448,10 +448,7 @@ int main(int argc, char* argv[]) {
 
     } else if(argc == 2) {
         //We will use parallellization
-        double tempStart = 2.0; double tempEnd = 2.3; double dt = (tempEnd - tempStart)/(6.0*2.0-1.0);
         string str = string(argv[1]);
-
-        double elapsedTime;
 
         if(str.compare("help") == 0 || str.compare("Help") == 0 || str.compare("HELP") == 0 ) {
             cout << "This program will divide the workload in 6 parts and" << endl;
@@ -473,7 +470,10 @@ int main(int argc, char* argv[]) {
             cout << "in the folder where Project4.x is." << endl;
 
         } else {
+            double tempStart = 2.0; double tempEnd = 2.3; double dt = (tempEnd - tempStart)/(6.0*2.0-1.0);
             int worker = atoi(argv[1]);
+
+            double elapsedTime;
 
             if(worker <= 6) {
                 high_resolution_clock::time_point time1 = high_resolution_clock::now();
